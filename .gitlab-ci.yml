@@ -1,0 +1,19 @@
+image: python:3.6
+
+cache:
+  paths:
+    - .pip
+    - .tox
+
+before_script:
+  - pip --cache-dir=.pip install tox
+
+tox:
+  script:
+    - tox
+  coverage: '/TOTAL\s+(?:\d+\s+){2}(\d+\%)/'
+  artifacts:
+    reports:
+      junit: junit-*.xml
+    paths:
+      - htmlcov

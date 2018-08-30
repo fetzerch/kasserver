@@ -1,0 +1,71 @@
+<?xml version ='1.0' encoding ='UTF-8' ?><definitions name='KasApi'
+  targetNamespace='https://kasserver.com/' 
+  xmlns:tns='https://kasserver.com/'
+  xmlns:soap='http://schemas.xmlsoap.org/wsdl/soap/'
+  xmlns:xsd='http://www.w3.org/2001/XMLSchema'
+  xmlns:soapenc='http://schemas.xmlsoap.org/soap/encoding/'
+  xmlns:wsdl='http://schemas.xmlsoap.org/wsdl/'
+  xmlns:ns2='http://xml.apache.org/xml-soap'
+  xmlns='http://schemas.xmlsoap.org/wsdl/'>
+
+
+  <types>
+    <xsd:schema targetNamespace="https://kasserver.com/">
+     <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+     <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+     <xsd:complexType name="ArrayOfString">
+      <xsd:complexContent>
+       <xsd:restriction base="soapenc:Array">
+        <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="xsd:string[]"/>
+       </xsd:restriction>
+      </xsd:complexContent>
+     </xsd:complexType>
+   </xsd:schema>
+   <xsd:schema targetNamespace="http://xml.apache.org/xml-soap">
+     <xsd:complexType name="Item">
+       <xsd:all>
+         <xsd:element name="key" type="xsd:anyType"/>
+         <xsd:element name="value" type="xsd:anyType"/>
+       </xsd:all>
+       </xsd:complexType>
+       <xsd:complexType name="Map">
+         <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="item" type="ns2:Item"/>
+         </xsd:sequence>
+       </xsd:complexType>
+    </xsd:schema>
+  </types>
+
+<message name='KasApiAnfrage'>
+  <part name='Params' type='xsd:anyType'/>
+</message>
+<message name='KasApiAntwort'>
+  <part name='return' type='xsd:anyType'/>
+</message>
+
+<portType name='KasApiPortType'>
+  <operation name='KasApi'>
+    <input message='tns:KasApiAnfrage'/>
+    <output message='tns:KasApiAntwort'/>
+  </operation>
+</portType>
+
+<binding name='KasApiBinding' type='tns:KasApiPortType'>
+  <soap:binding style='rpc' transport='http://schemas.xmlsoap.org/soap/http'/>
+  <operation name='KasApi'>
+    <soap:operation soapAction='urn:xmethodsKasApi#KasApi'/>
+    <input>
+      <soap:body use='encoded' namespace='urn:xmethodsKasApi' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+    </input>
+    <output>
+      <soap:body use='encoded' namespace='urn:xmethodsKasApi' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+    </output>
+  </operation>
+</binding>
+
+<service name='KasApiService'>
+  <port name='KasApiPort' binding='tns:KasApiBinding'>
+    <soap:address location='https://kasapi.kasserver.com/soap/KasApi.php'/>
+  </port>
+</service>
+</definitions>
