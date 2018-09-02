@@ -1,3 +1,11 @@
+.. image:: https://travis-ci.org/fetzerch/kasserver.svg?branch=master
+    :target: https://travis-ci.org/fetzerch/kasserver
+    :alt: Travis CI Status
+
+.. image:: https://coveralls.io/repos/github/fetzerch/kasserver/badge.svg?branch=master
+    :target: https://coveralls.io/github/fetzerch/kasserver?branch=master
+    :alt: Coveralls Status
+
 kasserver - Manage domains hosted on All-Inkl.com through the KAS server API
 ============================================================================
 
