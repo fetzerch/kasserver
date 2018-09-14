@@ -29,40 +29,35 @@ import pytest
 
 from kasserver.kasserver_dns_certbot import cli
 
-# pylint: disable=too-few-public-methods
+
+RECORD_FQDN = 'new.example.com'
+RECORD_FQDN_ACME = '_acme-challenge.{}'.format(RECORD_FQDN)
+RECORD_VALUE = '123456'
+RECORD_VALUE_DIFFERENT = '654321'
+RECORD_TYPE = 'TXT'
 
 
-class TestKasServerDnsCertbot:
-    """Unit tests for kasserver_dns_certbot cli"""
-
-    RECORD_FQDN = 'new.example.com'
-    RECORD_FQDN_ACME = '_acme-challenge.{}'.format(RECORD_FQDN)
-    RECORD_VALUE = '123456'
-    RECORD_VALUE_DIFFERENT = '654321'
-    RECORD_TYPE = 'TXT'
-
-    @mock.patch('kasserver.KasServer', autospec=True)
-    @pytest.mark.parametrize('record,expected', [
-        (None,
-         [{'method': 'add_dns_record',
-           'args': [RECORD_FQDN_ACME, RECORD_TYPE,
-                    RECORD_VALUE]}]),
-        ({'data': RECORD_VALUE},
-         [{'method': 'delete_dns_record',
-           'args': [RECORD_FQDN_ACME, RECORD_TYPE]}]),
-        ({'data': RECORD_VALUE_DIFFERENT},
-         [{'method': 'delete_dns_record',
-           'args': [RECORD_FQDN_ACME, RECORD_TYPE]},
-          {'method': 'add_dns_record',
-           'args': [RECORD_FQDN_ACME, RECORD_TYPE,
-                    RECORD_VALUE]}])
-    ])
-    def test_authentication_cleanup(self, kasserver, record, expected):
-        """Test the authentication and cleanup"""
-        kasserver.return_value.get_dns_record.return_value = record
-        clirunner = click.testing.CliRunner()
-        result = clirunner.invoke(cli, [self.RECORD_FQDN, self.RECORD_VALUE])
-        assert result.exit_code == 0
-        print(kasserver.mock_calls)
-        all(getattr(kasserver.return_value, call['method']).assert_any_call(
-            *call['args']) for call in expected)
+@mock.patch('kasserver.KasServer', autospec=True)
+@pytest.mark.parametrize('record,expected', [
+    (None,
+     [{'method': 'add_dns_record',
+       'args': [RECORD_FQDN_ACME, RECORD_TYPE, RECORD_VALUE]}]),
+    ({'data': RECORD_VALUE},
+     [{'method': 'delete_dns_record',
+       'args': [RECORD_FQDN_ACME, RECORD_TYPE]}]),
+    ({'data': RECORD_VALUE_DIFFERENT},
+     [{'method': 'delete_dns_record',
+       'args': [RECORD_FQDN_ACME, RECORD_TYPE]},
+      {'method': 'add_dns_record',
+       'args': [RECORD_FQDN_ACME, RECORD_TYPE,
+                RECORD_VALUE]}])
+])
+def test_authentication_cleanup(kasserver, record, expected):
+    """Test the authentication and cleanup"""
+    kasserver.return_value.get_dns_record.return_value = record
+    result = click.testing.CliRunner().invoke(
+        cli, [RECORD_FQDN, RECORD_VALUE])
+    assert result.exit_code == 0
+    print(kasserver.mock_calls)
+    all(getattr(kasserver.return_value, call['method']).assert_any_call(
+        *call['args']) for call in expected)

@@ -29,33 +29,27 @@ import pytest
 
 from kasserver.kasserver_dns_lego import cli
 
-# pylint: disable=too-few-public-methods
+
+RECORD_FQDN = 'new.example.com'
+RECORD_VALUE = '123456'
+RECORD_TYPE = 'TXT'
+RECORD_TTL = '10'
 
 
-class TestKasServerDnsLego:
-    """Unit tests for kasserver_dns_lego cli"""
-
-    RECORD_FQDN = 'new.example.com'
-    RECORD_VALUE = '123456'
-    RECORD_TYPE = 'TXT'
-    RECORD_TTL = '10'
-
-    @mock.patch('kasserver.KasServer', autospec=True)
-    @pytest.mark.parametrize('command,expected', [
-        ('present',
-         {'method': 'add_dns_record',
-          'args': [RECORD_FQDN, RECORD_TYPE,
-                   RECORD_VALUE, RECORD_TTL]}),
-        ('cleanup',
-         {'method': 'delete_dns_record',
-          'args': [RECORD_FQDN, RECORD_TYPE]})
-    ])
-    def test_present_cleanup(self, kasserver, command, expected):
-        """Test the present and cleanup command"""
-        clirunner = click.testing.CliRunner()
-        result = clirunner.invoke(
-            cli,
-            [command, self.RECORD_FQDN, self.RECORD_VALUE, self.RECORD_TTL])
-        assert result.exit_code == 0
-        getattr(kasserver.return_value, expected['method']).assert_any_call(
-            *expected['args'])
+@mock.patch('kasserver.KasServer', autospec=True)
+@pytest.mark.parametrize('command,expected', [
+    ('present',
+     {'method': 'add_dns_record',
+      'args': [RECORD_FQDN, RECORD_TYPE,
+               RECORD_VALUE, RECORD_TTL]}),
+    ('cleanup',
+     {'method': 'delete_dns_record',
+      'args': [RECORD_FQDN, RECORD_TYPE]})
+])
+def test_present_cleanup(kasserver, command, expected):
+    """Test the present and cleanup command"""
+    result = click.testing.CliRunner().invoke(
+        cli, [command, RECORD_FQDN, RECORD_VALUE, RECORD_TTL])
+    assert result.exit_code == 0
+    getattr(kasserver.return_value, expected['method']).assert_any_call(
+        *expected['args'])

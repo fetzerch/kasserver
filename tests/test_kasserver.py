@@ -51,8 +51,9 @@ class TestKasServerCredentials:
                      {'KASSERVER_USER': USERNAME,
                       'KASSERVER_PASSWORD': PASSWORD})
     @mock.patch('netrc.netrc', autospec=True)
-    def test_getcredentials_from_env(*_):
+    def test_getcredentials_from_env(netrc):
         """Test getting credentials from env variables"""
+        netrc.side_effect = FileNotFoundError('')
         server = KasServer()
         assert server._username == USERNAME
         assert server._auth_sha1 == PASSWORD_SHA1
