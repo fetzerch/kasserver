@@ -122,20 +122,37 @@ class TestKasServer:
          'data': 'www.example.com', 'aux': '0', 'changeable': 'Y'},
     ]
 
-    @mock.patch.dict('os.environ',
-                     {'KASSERVER_USER': USERNAME,
-                      'KASSERVER_PASSWORD': PASSWORD})
-    @mock.patch('netrc.netrc', autospec=True)
-    @mock.patch('zeep.Client', autospec=True)
-    def setup_method(self, *_):
-        """Setup unit tests for KasServer"""
-        self._server = KasServer()
-        self._kas = self._server._client.service.KasApi
+    @pytest.fixture()
+    def kasserver(self, mocker):
+        """Fixture that sets up a KasServer instance with mocked KasApi"""
+        mocker.patch.dict('os.environ',
+                          {'KASSERVER_USER': USERNAME,
+                           'KASSERVER_PASSWORD': PASSWORD})
+        mocker.patch('netrc.netrc', autospec=True)
+        mocker.patch('zeep.Client', autospec=True)
         KasServer.FLOOD_TIMEOUT = 0
+        kasserver = KasServer()
+        kasserver._client.service.KasApi.return_value = self.RESPONSE
+        return KasServer()
 
-    def test_request(self):
+    @staticmethod
+    @pytest.fixture()
+    def kasapi(kasserver):
+        """Fixture to retrieve mocked KasApi from KasServer"""
+        kasapi = kasserver._client.service.KasApi
+
+        def _requests_contains(request_type):
+            print("111111", kasapi.call_args_list)
+            return any(
+                json.loads(args[0])['KasRequestType'] == request_type
+                for args, _ in kasapi.call_args_list)
+        kasapi.requests_contains.side_effect = _requests_contains
+
+        return kasapi
+
+    def test_request(self, kasserver, kasapi):
         """Tests requesting data from KasServer"""
-        self._server._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
+        kasserver._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
         request = {
             'KasUser': USERNAME,
             'KasAuthType': 'sha1',
@@ -143,73 +160,64 @@ class TestKasServer:
             'KasRequestType': self.REQUEST_TYPE,
             'KasRequestParams': self.REQUEST_PARAMS,
         }
-        self._kas.assert_called_once_with(
+        kasapi.assert_called_once_with(
             json.dumps(request))
 
-    def test_request_failed(self):
+    def test_request_failed(self, kasserver, kasapi):
         """Test failed request from KasServer"""
-        self._kas.side_effect = zeep.exceptions.Fault('failed')
+        kasapi.side_effect = zeep.exceptions.Fault('failed')
         with pytest.raises(zeep.exceptions.Fault):
-            self._server._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
+            kasserver._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
 
-    def test_request_floodprotection(self):
+    def test_request_floodprotection(self, kasserver, kasapi):
         """Test request retries when hitting KasServer flood protection"""
         floodprotection = mock.PropertyMock(text='0.0')
-        self._kas.side_effect = [
+        kasapi.side_effect = [
             zeep.exceptions.Fault('flood_protection', detail=floodprotection),
             mock.DEFAULT
         ]
-        self._server._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
-        assert self._kas.call_count == 2
+        kasserver._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
+        assert kasapi.call_count == 2
 
-    def test_getdnsrecords(self):
+    def test_getdnsrecords(self, kasserver):
         """Test getting DNS record list"""
-        self._kas.return_value = self.RESPONSE
-        res = self._server.get_dns_records('example.com')
-        assert res == self.RESPONSE_PARSED
+        assert kasserver.get_dns_records('example.com') == self.RESPONSE_PARSED
 
-    def test_getdnsrecord(self):
+    def test_getdnsrecord(self, kasserver):
         """Test getting single DNS record"""
-        self._kas.return_value = self.RESPONSE
-        res = self._server.get_dns_record('www.example.com', 'A')
-        assert res == self.RESPONSE_PARSED[0]
+        assert kasserver.get_dns_record(
+            'www.example.com', 'A') == self.RESPONSE_PARSED[0]
 
-    def test_getdnsrecord_notfound(self):
+    @staticmethod
+    def test_getdnsrecord_notfound(kasserver):
         """Test getting single DNS record"""
-        self._kas.return_value = self.RESPONSE
-        res = self._server.get_dns_record('www.example.com', 'MX')
-        assert not res
+        assert not kasserver.get_dns_record('www.example.com', 'MX')
 
-    def _requests_contains(self, request_type):
-        return any(
-            json.loads(args[0])['KasRequestType'] == request_type
-            for _, args, _ in self._kas.mock_calls)
-
-    def test_adddnsrecord(self):
+    @staticmethod
+    def test_adddnsrecord(kasserver, kasapi):
         """Test adding a new DNS record"""
-        self._kas.return_value = self.RESPONSE
-        self._server.add_dns_record(
+        kasserver.add_dns_record(
             'test1.example.com', 'CNAME', 'www.example.com')
-        assert self._requests_contains('add_dns_settings')
+        assert kasapi.requests_contains('add_dns_settings')
 
-    def test_updatednsrecord(self):
+    @staticmethod
+    def test_updatednsrecord(kasserver, kasapi):
         """Test updating an existing new DNS record"""
-        self._kas.return_value = self.RESPONSE
-        self._server.add_dns_record(
+        kasserver.add_dns_record(
             'test.example.com', 'CNAME', 'www.example2.com')
-        assert self._requests_contains('update_dns_settings')
+        assert kasapi.requests_contains('update_dns_settings')
 
-    def test_deletednsrecord(self):
+    @staticmethod
+    def test_deletednsrecord(kasserver, kasapi):
         """Test deleting an existing DNS record"""
-        self._kas.return_value = self.RESPONSE
-        self._server.delete_dns_record('test.example.com', 'CNAME')
-        assert self._requests_contains('delete_dns_settings')
+        kasserver.delete_dns_record('test.example.com', 'CNAME')
+        assert kasapi.requests_contains('delete_dns_settings')
 
-    def test_deletedbsrecord_notfound(self):
+    @staticmethod
+    def test_deletedbsrecord_notfound(kasserver, kasapi):
         """Test deleting a non existent DNS record"""
-        self._kas.return_value = self.RESPONSE
-        self._server.delete_dns_record('test.example.com', 'MX')
-        assert not self._requests_contains('delete_dns_settings')
+        kasserver.delete_dns_record('test.example.com', 'MX')
+        assert not kasapi.requests_contains('delete_dns_settings')
 
 
 class TestKasServerUtils:
