@@ -6,6 +6,10 @@
     :target: https://coveralls.io/github/fetzerch/kasserver?branch=master
     :alt: Coveralls Status
 
+.. image:: https://img.shields.io/pypi/v/kasserver.svg
+    :target: https://pypi.org/project/kasserver
+    :alt: PyPI Version
+
 kasserver - Manage domains hosted on All-Inkl.com through the KAS server API
 ============================================================================
 
