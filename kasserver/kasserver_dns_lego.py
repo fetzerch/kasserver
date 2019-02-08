@@ -54,7 +54,7 @@ def cli():
 @cli.command()
 @click.argument('fqdn')
 @click.argument('value')
-@click.argument('ttl')
+@click.argument('ttl', required=False)
 def present(fqdn, value, ttl):
     """Add a DNS record for fqdn with value (and ttl)."""
     LOGGER.info("Setting DNS TXT record for domain %s to %s (TTL: %s)",
@@ -66,7 +66,7 @@ def present(fqdn, value, ttl):
 @cli.command()
 @click.argument('fqdn')
 @click.argument('value')
-@click.argument('ttl')
+@click.argument('ttl', required=False)
 def cleanup(fqdn, value, ttl):
     """Remove a DNS record for fqdn with value (and ttl)."""
     # pylint: disable=unused-argument
