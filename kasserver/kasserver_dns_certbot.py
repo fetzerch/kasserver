@@ -27,12 +27,12 @@ import click
 
 import kasserver
 
-LOGGER = logging.getLogger('kasserver_dns_certbot')
+LOGGER = logging.getLogger("kasserver_dns_certbot")
 
 
 @click.command()
-@click.argument('fqdn', envvar='CERTBOT_DOMAIN')
-@click.argument('value', envvar='CERTBOT_VALIDATION')
+@click.argument("fqdn", envvar="CERTBOT_DOMAIN")
+@click.argument("value", envvar="CERTBOT_VALIDATION")
 @click.version_option(kasserver.__version__)
 def cli(fqdn, value):
     """Request Let's encrypt (wildcard) certificates for All-Inkl.com domains.
@@ -49,13 +49,15 @@ def cli(fqdn, value):
     logging.basicConfig(level=logging.INFO)
     LOGGER.info("Received request for fqdn %s and value %a", fqdn, value)
     kas = kasserver.KasServer()
-    fqdn = f'_acme-challenge.{fqdn}'
-    record = kas.get_dns_record(fqdn, 'TXT')
+    fqdn = f"_acme-challenge.{fqdn}"
+    record = kas.get_dns_record(fqdn, "TXT")
     if record:
-        LOGGER.info("Removing existing DNS TXT record for domain %s "
-                    "with value %s",
-                    fqdn, record['data'])
-        kas.delete_dns_record(fqdn, 'TXT')
-    if not record or record['data'] != value:
+        LOGGER.info(
+            "Removing existing DNS TXT record for domain %s " "with value %s",
+            fqdn,
+            record["data"],
+        )
+        kas.delete_dns_record(fqdn, "TXT")
+    if not record or record["data"] != value:
         LOGGER.info("Setting DNS TXT record for domain %s to %s", fqdn, value)
-        kas.add_dns_record(fqdn, 'TXT', value)
+        kas.add_dns_record(fqdn, "TXT", value)

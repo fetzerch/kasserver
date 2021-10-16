@@ -31,44 +31,63 @@ LOGGER = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option('-v', '--verbose', is_flag=True, default=False,
-              help="Increase log output verbosity.")
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Increase log output verbosity.",
+)
 @click.version_option(kasserver.__version__)
 def cli(verbose):
     """Manage All-Inkl DNS records through the KAS server."""
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
 
 
-@cli.command(name='list')
-@click.argument('zone_name')
+@cli.command(name="list")
+@click.argument("zone_name")
 def list_command(zone_name):
     """List DNS records for zone_name."""
     kas = kasserver.KasServer()
     records = kas.get_dns_records(zone_name)
-    heading = {"id": "ID", "changeable": "C", "zone": "Zone", "name": "Name",
-               "type": "Type", "data": "Data", "aux": "Aux"}
+    heading = {
+        "id": "ID",
+        "changeable": "C",
+        "zone": "Zone",
+        "name": "Name",
+        "type": "Type",
+        "data": "Data",
+        "aux": "Aux",
+    }
     for item in [heading] + records:
-        print(f"{item['id']:>8} {item['changeable']:1} {item['zone']:20} "
-              f"{item['name'] if item['name'] else '':20} {item['type']:5} "
-              f"{item['data']:25} {item['aux']:>5}")
+        print(
+            f"{item['id']:>8} {item['changeable']:1} {item['zone']:20} "
+            f"{item['name'] if item['name'] else '':20} {item['type']:5} "
+            f"{item['data']:25} {item['aux']:>5}"
+        )
 
 
 @cli.command()
-@click.argument('fqdn')
-@click.argument('record_type')
-@click.argument('value')
-@click.option('--ttl', default='0', help="the TTL value")
+@click.argument("fqdn")
+@click.argument("record_type")
+@click.argument("value")
+@click.option("--ttl", default="0", help="the TTL value")
 def add(fqdn, record_type, value, ttl):
     """Add a DNS record for fqdn with record_type and value."""
-    LOGGER.info("Setting DNS %s record for domain %s to %s (TTL: %s)",
-                record_type, fqdn, value, ttl)
+    LOGGER.info(
+        "Setting DNS %s record for domain %s to %s (TTL: %s)",
+        record_type,
+        fqdn,
+        value,
+        ttl,
+    )
     kas = kasserver.KasServer()
     kas.add_dns_record(fqdn, record_type, value, ttl)
 
 
 @cli.command()
-@click.argument('fqdn')
-@click.argument('record_type')
+@click.argument("fqdn")
+@click.argument("record_type")
 def remove(fqdn, record_type):
     """Remove a DNS record for fqdn and record_type."""
     LOGGER.info("Removing DNS %s record for domain %s", record_type, fqdn)

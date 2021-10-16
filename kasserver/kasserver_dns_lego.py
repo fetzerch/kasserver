@@ -27,7 +27,7 @@ import click
 
 import kasserver
 
-LOGGER = logging.getLogger('kasserver_dns_lego')
+LOGGER = logging.getLogger("kasserver_dns_lego")
 
 
 @click.group()
@@ -46,30 +46,32 @@ def cli():
     for more detailed information.
     """
     logging.basicConfig(
-        format='%(asctime)s %(name)s: %(message)s',
+        format="%(asctime)s %(name)s: %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
-        level=logging.INFO)
+        level=logging.INFO,
+    )
 
 
 @cli.command()
-@click.argument('fqdn')
-@click.argument('value')
-@click.argument('ttl', required=False)
+@click.argument("fqdn")
+@click.argument("value")
+@click.argument("ttl", required=False)
 def present(fqdn, value, ttl):
     """Add a DNS record for fqdn with value (and ttl)."""
-    LOGGER.info("Setting DNS TXT record for domain %s to %s (TTL: %s)",
-                fqdn, value, ttl)
+    LOGGER.info(
+        "Setting DNS TXT record for domain %s to %s (TTL: %s)", fqdn, value, ttl
+    )
     kas = kasserver.KasServer()
-    kas.add_dns_record(fqdn, 'TXT', value, ttl)
+    kas.add_dns_record(fqdn, "TXT", value, ttl)
 
 
 @cli.command()
-@click.argument('fqdn')
-@click.argument('value')
-@click.argument('ttl', required=False)
+@click.argument("fqdn")
+@click.argument("value")
+@click.argument("ttl", required=False)
 def cleanup(fqdn, value, ttl):
     """Remove a DNS record for fqdn with value (and ttl)."""
     # pylint: disable=unused-argument
     LOGGER.info("Removing DNS TXT record for domain %s", fqdn)
     kas = kasserver.KasServer()
-    kas.delete_dns_record(fqdn, 'TXT')
+    kas.delete_dns_record(fqdn, "TXT")
