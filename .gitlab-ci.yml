@@ -1,19 +1,39 @@
-image: python:3.6
-
 cache:
   paths:
     - .pip
     - .tox
 
-before_script:
-  - pip --cache-dir=.pip install tox
-
-tox:
+.tox:
+  before_script:
+    - pip --cache-dir=.pip install tox
   script:
-    - tox
-  coverage: '/TOTAL\s+(?:\d+\s+){2}(\d+\%)/'
+    - tox -- --junitxml=junit.xml --cov-report=xml:coverage.xml
+  coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
     reports:
-      junit: junit-*.xml
-    paths:
-      - htmlcov
+      cobertura: coverage.xml
+      junit: junit.xml
+
+py36:
+  extends: .tox
+  image: python:3.6
+  variables:
+    TOXENV: py36
+
+py37:
+  extends: .tox
+  image: python:3.7
+  variables:
+    TOXENV: py37
+
+py38:
+  extends: .tox
+  image: python:3.8
+  variables:
+    TOXENV: py38
+
+py39:
+  extends: .tox
+  image: python:3.9
+  variables:
+    TOXENV: py39
