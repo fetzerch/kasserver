@@ -49,7 +49,7 @@ def cli(fqdn, value):
     logging.basicConfig(level=logging.INFO)
     LOGGER.info("Received request for fqdn %s and value %a", fqdn, value)
     kas = kasserver.KasServer()
-    fqdn = '{}{}'.format('_acme-challenge.', fqdn)
+    fqdn = f'_acme-challenge.{fqdn}'
     record = kas.get_dns_record(fqdn, 'TXT')
     if record:
         LOGGER.info("Removing existing DNS TXT record for domain %s "
