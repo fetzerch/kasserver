@@ -45,13 +45,12 @@ def list_command(zone_name):
     """List DNS records for zone_name."""
     kas = kasserver.KasServer()
     records = kas.get_dns_records(zone_name)
-    print("{:8} {:1} {:20} {:20} {:5} {:25} {:5}".format(
-        'ID', 'C', 'Zone', 'Name', 'Type', 'Data', 'Aux'))
-    for item in records:
-        print("{:>8} {:1} {:20} {:20} {:5} {:25} {:>5}".format(
-            item['id'], item['changeable'], item['zone'],
-            item['name'] if item['name'] else '',
-            item['type'], item['data'], item['aux']))
+    heading = {"id": "ID", "changeable": "C", "zone": "Zone", "name": "Name",
+               "type": "Type", "data": "Data", "aux": "Aux"}
+    for item in [heading] + records:
+        print(f"{item['id']:>8} {item['changeable']:1} {item['zone']:20} "
+              f"{item['name'] if item['name'] else '':20} {item['type']:5} "
+              f"{item['data']:25} {item['aux']:>5}")
 
 
 @cli.command()

@@ -31,7 +31,7 @@ from kasserver.kasserver_dns_certbot import cli
 
 
 RECORD_FQDN = 'new.example.com'
-RECORD_FQDN_ACME = '_acme-challenge.{}'.format(RECORD_FQDN)
+RECORD_FQDN_ACME = f'_acme-challenge.{RECORD_FQDN}'
 RECORD_VALUE = '123456'
 RECORD_VALUE_DIFFERENT = '654321'
 RECORD_TYPE = 'TXT'
