@@ -33,47 +33,49 @@ import pbr.version
 import zeep
 import zeep.helpers
 
-__version__ = pbr.version.VersionInfo('kasserver').release_string()
+__version__ = pbr.version.VersionInfo("kasserver").release_string()
 
 LOGGER = logging.getLogger(__name__)
 
 
 class KasServer:
     """Manage domains hosted on All-Inkl.com through the KAS server API"""
+
     FLOOD_TIMEOUT = 1
 
     def __init__(self):
-        wsdl_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'KasApi.wsdl')
+        wsdl_file = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "KasApi.wsdl"
+        )
         self._client = zeep.Client(wsdl_file)
         self._get_credentials()
 
     def _get_credentials(self):
         def _sha1(string):
-            return (None if not string else
-                    hashlib.sha1(string.encode()).hexdigest())
+            return None if not string else hashlib.sha1(string.encode()).hexdigest()
 
-        self._username = os.environ.get('KASSERVER_USER', None)
-        self._auth_sha1 = _sha1(os.environ.get('KASSERVER_PASSWORD', None))
+        self._username = os.environ.get("KASSERVER_USER", None)
+        self._auth_sha1 = _sha1(os.environ.get("KASSERVER_PASSWORD", None))
         if self._username:
             return
 
-        server = 'kasapi.kasserver.com'
+        server = "kasapi.kasserver.com"
         try:
             info = netrc.netrc().authenticators(server)
             self._username = info[0]
             self._auth_sha1 = _sha1(info[2])
         except (FileNotFoundError, netrc.NetrcParseError) as err:
-            LOGGER.warning("Cannot load credentials for %s from .netrc: %s",
-                           server, err)
+            LOGGER.warning(
+                "Cannot load credentials for %s from .netrc: %s", server, err
+            )
 
     def _request(self, request, params):
         request = {
-            'KasUser': self._username,
-            'KasAuthType': 'sha1',
-            'KasAuthData': self._auth_sha1,
-            'KasRequestType': request,
-            'KasRequestParams': params
+            "KasUser": self._username,
+            "KasAuthType": "sha1",
+            "KasAuthData": self._auth_sha1,
+            "KasRequestType": request,
+            "KasRequestParams": params,
         }
 
         def _send_request(request):
@@ -82,35 +84,37 @@ class KasServer:
                 time.sleep(KasServer.FLOOD_TIMEOUT)
                 return result
             except zeep.exceptions.Fault as exc:
-                if exc.message == 'flood_protection':
-                    timeout = math.ceil(float(exc.detail.text)) \
-                        + KasServer.FLOOD_TIMEOUT
-                    LOGGER.warning("Hit flood protection, retrying in %ds",
-                                   timeout)
+                if exc.message == "flood_protection":
+                    timeout = (
+                        math.ceil(float(exc.detail.text)) + KasServer.FLOOD_TIMEOUT
+                    )
+                    LOGGER.warning("Hit flood protection, retrying in %ds", timeout)
                     time.sleep(timeout)
                     return _send_request(request)
                 raise
+
         return _send_request(request)
 
     @staticmethod
     def _split_fqdn(fqdn):
         """Split a FQDN into record_name and zone_name values"""
         if not fqdn:
-            raise ValueError('Error: No valid FQDN given.')
-        split_dns = fqdn.rstrip('.').rsplit('.', 2)
-        return ''.join(split_dns[:-2]), '.'.join(split_dns[-2:]) + '.'
+            raise ValueError("Error: No valid FQDN given.")
+        split_dns = fqdn.rstrip(".").rsplit(".", 2)
+        return "".join(split_dns[:-2]), ".".join(split_dns[-2:]) + "."
 
     def get_dns_records(self, fqdn):
         """Get list of DNS records."""
         _, zone_name = self._split_fqdn(fqdn)
-        res = self._request('get_dns_settings', {'zone_host': zone_name})
+        res = self._request("get_dns_settings", {"zone_host": zone_name})
 
         # Put the DNS records into a list of dicts
-        items = res[1]['value']['item'][2]['value']['_value_1']
+        items = res[1]["value"]["item"][2]["value"]["_value_1"]
         result = []
         for item in items:
-            result.append({i['key'].split('_', 1)[-1]: i['value']
-                           for i in item['item']})
+            result.append(
+                {i["key"].split("_", 1)[-1]: i["value"] for i in item["item"]}
+            )
         return result
 
     def get_dns_record(self, fqdn, record_type):
@@ -118,7 +122,7 @@ class KasServer:
         record_name, zone_name = self._split_fqdn(fqdn)
         result = self.get_dns_records(zone_name)
         for item in result:
-            if item['name'] == record_name and item['type'] == record_type:
+            if item["name"] == record_name and item["type"] == record_type:
                 return item
         return None
 
@@ -126,22 +130,21 @@ class KasServer:
         """Add or update an DNS record"""
         record_name, zone_name = self._split_fqdn(fqdn)
         params = {
-            'zone_host': zone_name,
-            'record_name': record_name,
-            'record_type': record_type,
-            'record_data': record_data,
-            'record_aux': record_aux if record_aux else '0'
+            "zone_host": zone_name,
+            "record_name": record_name,
+            "record_type": record_type,
+            "record_data": record_data,
+            "record_aux": record_aux if record_aux else "0",
         }
         existing_record = self.get_dns_record(fqdn, record_type)
         if existing_record:
-            params['record_id'] = existing_record['id']
-            self._request('update_dns_settings', params)
+            params["record_id"] = existing_record["id"]
+            self._request("update_dns_settings", params)
         else:
-            self._request('add_dns_settings', params)
+            self._request("add_dns_settings", params)
 
     def delete_dns_record(self, fqdn, record_type):
         """Removes an existing DNS record"""
         existing_record = self.get_dns_record(fqdn, record_type)
         if existing_record:
-            self._request('delete_dns_settings',
-                          {'record_id': existing_record['id']})
+            self._request("delete_dns_settings", {"record_id": existing_record["id"]})

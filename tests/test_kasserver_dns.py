@@ -31,39 +31,47 @@ from kasserver.kasserver_dns import cli
 from .test_kasserver import TestKasServer
 
 
-RECORD_FQDN = 'new.example.com'
-RECORD_VALUE = '123456'
-RECORD_TYPE = 'CNAME'
-RECORD_TTL = '10'
+RECORD_FQDN = "new.example.com"
+RECORD_VALUE = "123456"
+RECORD_TYPE = "CNAME"
+RECORD_TTL = "10"
 
 
-@mock.patch('kasserver.KasServer', autospec=True)
+@mock.patch("kasserver.KasServer", autospec=True)
 def test_list(kasserver):
     """Test the list command"""
-    kasserver.return_value.get_dns_records.return_value = \
-        TestKasServer.RESPONSE_PARSED
-    result = click.testing.CliRunner().invoke(cli, ['list', 'example.com'])
+    kasserver.return_value.get_dns_records.return_value = TestKasServer.RESPONSE_PARSED
+    result = click.testing.CliRunner().invoke(cli, ["list", "example.com"])
     assert result.exit_code == 0
-    assert 'example.com' in result.output
+    assert "example.com" in result.output
 
 
-@mock.patch('kasserver.KasServer', autospec=True)
-@pytest.mark.parametrize('command,expected', [
-    ('add',
-     {'method': 'add_dns_record',
-      'params': ['--ttl', RECORD_TTL,
-                 RECORD_FQDN, RECORD_TYPE, RECORD_VALUE],
-      'args': [RECORD_FQDN, RECORD_TYPE,
-               RECORD_VALUE, RECORD_TTL]}),
-    ('remove',
-     {'method': 'delete_dns_record',
-      'params': [RECORD_FQDN, RECORD_TYPE],
-      'args': [RECORD_FQDN, RECORD_TYPE]})
-])
+@mock.patch("kasserver.KasServer", autospec=True)
+@pytest.mark.parametrize(
+    "command,expected",
+    [
+        (
+            "add",
+            {
+                "method": "add_dns_record",
+                "params": ["--ttl", RECORD_TTL, RECORD_FQDN, RECORD_TYPE, RECORD_VALUE],
+                "args": [RECORD_FQDN, RECORD_TYPE, RECORD_VALUE, RECORD_TTL],
+            },
+        ),
+        (
+            "remove",
+            {
+                "method": "delete_dns_record",
+                "params": [RECORD_FQDN, RECORD_TYPE],
+                "args": [RECORD_FQDN, RECORD_TYPE],
+            },
+        ),
+    ],
+)
 def test_add_remove(kasserver, command, expected):
     """Test the add and remove command"""
-    result = click.testing.CliRunner().invoke(
-        cli, [command, *expected['params']])
+    result = click.testing.CliRunner().invoke(cli, [command, *expected["params"]])
     assert result.exit_code == 0
-    getattr(kasserver.return_value, expected['method']).assert_any_call(
-        *expected['args'])
+    getattr(kasserver.return_value, expected["method"]).assert_any_call(
+        *expected["args"]
+    )

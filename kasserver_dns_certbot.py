@@ -24,4 +24,5 @@
 """Request Let's encrypt certificates for All-Inkl.com domains with Certbot"""
 
 from kasserver.kasserver_dns_certbot import cli
+
 cli()  # pylint: disable=no-value-for-parameter

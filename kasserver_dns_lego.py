@@ -24,4 +24,5 @@
 """Request Let's encrypt certificates for All-Inkl.com domains with lego"""
 
 from kasserver.kasserver_dns_lego import cli
+
 cli()

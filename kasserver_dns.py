@@ -24,4 +24,5 @@
 """Manage DNS records for All-Inkl.com domains through the KAS server"""
 
 from kasserver.kasserver_dns import cli
+
 cli()  # pylint: disable=no-value-for-parameter
