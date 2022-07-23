@@ -53,7 +53,7 @@ def cli(fqdn, value):
     record = kas.get_dns_record(fqdn, "TXT")
     if record:
         LOGGER.info(
-            "Removing existing DNS TXT record for domain %s " "with value %s",
+            "Removing existing DNS TXT record for domain %s with value %s",
             fqdn,
             record["data"],
         )
