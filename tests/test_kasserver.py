@@ -36,7 +36,6 @@ LOGGER = logging.getLogger(__name__)
 
 USERNAME = "username"
 PASSWORD = "password"
-PASSWORD_SHA1 = "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8"
 
 # pylint: disable=protected-access
 # pylint: disable=attribute-defined-outside-init
@@ -56,7 +55,7 @@ class TestKasServerCredentials:
         netrc.side_effect = FileNotFoundError("")
         server = KasServer()
         assert server._username == USERNAME
-        assert server._auth_sha1 == PASSWORD_SHA1
+        assert server._password == PASSWORD
 
     @staticmethod
     @mock.patch.dict("os.environ", {})
@@ -66,7 +65,7 @@ class TestKasServerCredentials:
         netrc.return_value.authenticators.return_value = (USERNAME, "", PASSWORD)
         server = KasServer()
         assert server._username == USERNAME
-        assert server._auth_sha1 == PASSWORD_SHA1
+        assert server._password == PASSWORD
 
     @staticmethod
     @mock.patch.dict("os.environ", {})
@@ -76,7 +75,7 @@ class TestKasServerCredentials:
         netrc.side_effect = FileNotFoundError("")
         server = KasServer()
         assert not server._username
-        assert not server._auth_sha1
+        assert not server._password
 
 
 class TestKasServer:
@@ -186,8 +185,8 @@ class TestKasServer:
         kasserver._request(self.REQUEST_TYPE, self.REQUEST_PARAMS)
         request = {
             "KasUser": USERNAME,
-            "KasAuthType": "sha1",
-            "KasAuthData": PASSWORD_SHA1,
+            "KasAuthType": "plain",
+            "KasAuthData": PASSWORD,
             "KasRequestType": self.REQUEST_TYPE,
             "KasRequestParams": self.REQUEST_PARAMS,
         }

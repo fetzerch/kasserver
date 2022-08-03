@@ -51,11 +51,8 @@ class KasServer:
         self._get_credentials()
 
     def _get_credentials(self):
-        def _sha1(string):
-            return None if not string else hashlib.sha1(string.encode()).hexdigest()
-
         self._username = os.environ.get("KASSERVER_USER", None)
-        self._auth_sha1 = _sha1(os.environ.get("KASSERVER_PASSWORD", None))
+        self._password = os.environ.get("KASSERVER_PASSWORD", None)
         if self._username:
             return
 
@@ -63,7 +60,7 @@ class KasServer:
         try:
             info = netrc.netrc().authenticators(server)
             self._username = info[0]
-            self._auth_sha1 = _sha1(info[2])
+            self._password = info[2]
         except (FileNotFoundError, netrc.NetrcParseError) as err:
             LOGGER.warning(
                 "Cannot load credentials for %s from .netrc: %s", server, err
@@ -72,8 +69,8 @@ class KasServer:
     def _request(self, request, params):
         request = {
             "KasUser": self._username,
-            "KasAuthType": "sha1",
-            "KasAuthData": self._auth_sha1,
+            "KasAuthType": "plain",
+            "KasAuthData": self._password,
             "KasRequestType": request,
             "KasRequestParams": params,
         }
