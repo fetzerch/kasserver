@@ -61,9 +61,15 @@ def list_command(zone_name):
     }
     for item in [heading] + records:
         print(
-            f"{item['id']:>8} {item['changeable']:1} {item['zone']:20} "
-            f"{item['name'] if item['name'] else '':20} {item['type']:5} "
-            f"{item['data']:25} {item['aux']:>5}"
+            "{:>8} {:1} {:20} {:20} {:5} {:25} {:>5}".format(
+                item["id"],
+                item["changeable"],
+                item["zone"],
+                item["name"] if item["name"] else "",
+                item["type"],
+                item["data"],
+                item["aux"],
+            )
         )
 
 
