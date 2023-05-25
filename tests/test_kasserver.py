@@ -90,7 +90,7 @@ class TestKasServer:
             "key": "Response",
             "value": {
                 "item": [
-                    {},
+                    {"key": "KasFloodDelay", "value": 0},
                     {},
                     {
                         "key": "ReturnInfo",

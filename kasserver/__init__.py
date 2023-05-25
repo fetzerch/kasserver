@@ -41,14 +41,13 @@ LOGGER = logging.getLogger(__name__)
 class KasServer:
     """Manage domains hosted on All-Inkl.com through the KAS server API"""
 
-    FLOOD_TIMEOUT = 1
-
     def __init__(self):
         wsdl_file = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "KasApi.wsdl"
         )
         self._client = zeep.Client(wsdl_file)
         self._get_credentials()
+        self._flood_timeout = 0
 
     def _get_credentials(self):
         self._username = os.environ.get("KASSERVER_USER", None)
@@ -76,15 +75,14 @@ class KasServer:
         }
 
         def _send_request(request):
+            time.sleep(self._flood_timeout)
             try:
                 result = self._client.service.KasApi(json.dumps(request))
-                time.sleep(KasServer.FLOOD_TIMEOUT)
+                self._flood_timeout = result[1]["value"]["item"][0]["value"]
                 return result
             except zeep.exceptions.Fault as exc:
                 if exc.message == "flood_protection":
-                    timeout = (
-                        math.ceil(float(exc.detail.text)) + KasServer.FLOOD_TIMEOUT
-                    )
+                    timeout = math.ceil(float(exc.detail.text))
                     LOGGER.warning("Hit flood protection, retrying in %ds", timeout)
                     time.sleep(timeout)
                     return _send_request(request)
