@@ -27,6 +27,8 @@ import click
 
 import kasserver
 
+import time
+
 LOGGER = logging.getLogger("kasserver_dns_certbot")
 
 
@@ -51,6 +53,7 @@ def cli(fqdn, value):
     kas = kasserver.KasServer()
     fqdn = f"_acme-challenge.{fqdn}"
     record = kas.get_dns_record(fqdn, "TXT")
+    time.sleep(3)
     if record:
         LOGGER.info(
             "Removing existing DNS TXT record for domain %s with value %s",
