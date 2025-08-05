@@ -55,7 +55,7 @@ dev = [
 Repository = "https://github.com/fetzerch/kasserver"
 
 [project.scripts]
-kasserver-dns = "asserver.kasserver_dns:cli"
+kasserver-dns = "kasserver.kasserver_dns:cli"
 kasserver-dns-certbot = "kasserver.kasserver_dns_certbot:cli"
 kasserver-dns-lego = "kasserver.kasserver_dns_lego:cli"
 
