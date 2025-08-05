@@ -22,18 +22,17 @@
 """Manage domains hosted on All-Inkl.com through the KAS server API"""
 
 import json
-import hashlib
 import logging
 import math
 import netrc
 import os
 import time
+import importlib.metadata
 
-import pbr.version
 import zeep
 import zeep.helpers
 
-__version__ = pbr.version.VersionInfo("kasserver").release_string()
+__version__ = importlib.metadata.version("kasserver")
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
-[![Build Status](https://github.com/fetzerch/kasserver/actions/workflows/check.yml/badge.svg)](https://github.com/fetzerch/kasserver/actions/workflows/check.yml)
-[![Coverage Status](https://coveralls.io/repos/github/fetzerch/kasserver/badge.svg)](https://coveralls.io/github/fetzerch/kasserver)
+[![GitHub Actions CI Status](https://github.com/fetzerch/kasserver/actions/workflows/check.yml/badge.svg?event=push&branch=master)](https://github.com/fetzerch/kasserver/actions)
+[![codecov Status](https://codecov.io/github/fetzerch/kasserver/graph/badge.svg?token=F3M0w6Lr2r)](https://codecov.io/github/fetzerch/kasserver)
 [![PyPI Version](https://img.shields.io/pypi/v/kasserver.svg)](https://pypi.org/project/kasserver)
 
 # kasserver - Manage domains hosted on All-Inkl.com through the KAS server API
