@@ -9,6 +9,7 @@ build/
 dist/
 ChangeLog
 AUTHORS
+.uv-cache/
 
 # Tests
 .coverage
