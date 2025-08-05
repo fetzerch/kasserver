@@ -3,55 +3,102 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    name: Test with Python ${{ matrix.py }}
+    name: Test with Python ${{ matrix.env }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        py:
+        env:
+          - "3.13"
+          - "3.12"
           - "3.11"
           - "3.10"
-          - "3.9"
-          - "3.8"
-          - "3.7"
     steps:
-      - name: Setup python for test ${{ matrix.py }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.py }}
-      - uses: actions/checkout@v2
-      - name: Install tox-gh
-        run: python -m pip install tox-gh
-      - name: Setup test suite
-        run: tox
-      - if: ${{ matrix.py == '3.11' }}
-        name: Generate coverage data
-        run: .tox/py310/bin/coverage lcov -o coverage/lcov.info
-      - if: ${{ matrix.py == '3.11' }}
-        name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
 
-  publish:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    needs: [test]
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv --with tox-gh
+
+      - name: Install Python
+        if: matrix.env != '3.13'
+        run: uv python install --python-preference only-managed ${{ matrix.env }}
+
+      - name: Setup test suite
+        run: tox run -vv --notest --skip-missing-interpreters false
+        env:
+          TOX_GH_MAJOR_MINOR: ${{ matrix.env }}
+
+      - name: Upload coverage reports
+        if: ${{ matrix.env == '3.13' }}
+        run: uv run pytest --cov --cov-report=xml --cov-branch
+
+      - name: Coveralls
+        if: ${{ matrix.env == '3.13' }}
+        uses: coverallsapp/github-action@v2
+        with:
+          files: coverage.xml
+          debug: true
+
+      - name: Upload coverage reports to Codecov
+        if: ${{ matrix.env == '3.13' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  pre-commit:
+    name: Run pre-commit linters
     runs-on: ubuntu-latest
     steps:
-      - name: Setup python to build package
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.11"
-      - name: Install build
-        run: python -m pip install build
-      - uses: actions/checkout@v2
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - uses: pre-commit/action@v3.0.1
+
+  publish:
+    name: Publish to PyPI
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    needs:
+      - test
+      - pre-commit
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
       - name: Build sdist and wheel
-        run: python -m build -s -w . -o dist
+        run: |
+          VERSION=$(uvx dunamai from any --no-metadata --style pep440)
+          uv version $VERSION
+          uv build
+
       - name: Publish to PyPi
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          skip_existing: true
-          user: ${{ secrets.pypi_user }}
-          password: ${{ secrets.pypi_password }}
+          skip-existing: true
+          # repository-url: https://test.pypi.org/legacy/
